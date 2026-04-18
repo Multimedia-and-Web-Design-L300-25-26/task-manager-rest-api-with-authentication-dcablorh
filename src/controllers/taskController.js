@@ -1,55 +1,52 @@
-import express from "express";
 import Task from "../models/Task.js";
-import authMiddleware from "../middleware/authMiddleware.js";
 
-const router = express.Router();
-
-// Apply auth middleware
-router.use(authMiddleware);
-
-// POST /api/tasks
-router.post("/", async (req, res) => {
+export const createTask = async (req, res) => {
   try {
+
     const { title } = req.body;
-    if (!title) {
-      return res.status(400).json({ message: "Task title is required" });
-    }
+
     const task = await Task.create({
       title,
-      user: req.user, // this comes from authMiddleware
+      user: req.user
     });
+
     res.status(201).json(task);
+
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
-});
+};
 
-// GET /api/tasks
-router.get("/", async (req, res) => {
+export const getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ user: req.user }); // only the user's tasks
+
+    const tasks = await Task.find({ user: req.user });
+
     res.json(tasks);
+
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
-});
+};
 
-// DELETE /api/tasks/:id
-router.delete("/:id", async (req, res) => {
+export const deleteTask = async (req, res) => {
   try {
+
     const task = await Task.findById(req.params.id);
+
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
-    // Only owner can delete
+
     if (task.user.toString() !== req.user) {
       return res.status(403).json({ message: "Not authorized" });
     }
+
     await task.deleteOne();
+
     res.json({ message: "Task deleted" });
+
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
-});
-
-export default router;
+};
